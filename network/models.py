@@ -23,7 +23,7 @@ class Post(models.Model):
     """
     Contains all data pertaining to user posts.
     """
-    content = models.CharField(max_length=256)
+    content = models.TextField(max_length=256)
     timestamp = models.DateTimeField(auto_now_add=True)
     likes = models.ManyToManyField(
         'User',

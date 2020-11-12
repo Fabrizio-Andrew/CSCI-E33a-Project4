@@ -1,5 +1,18 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    TODO
+    {% if user.is_authenticated %}
+        <div id="newpost-view">
+            <h3>New Post</h3>
+            <form id="newpost-form">
+                <input type="hidden" value="{{ user.id }}" name="user_id">
+                <textarea class="form-control" id="newpost-content" maxlength="256" name="content" placeholder="Enter Post"></textarea>
+                <input type="submit" class="btn btn-primary">
+            </form>
+        </div>
+    {% endif %}
+
+    <div id="timeline-view">
+        Timeline
+    </div>
 {% endblock %}
