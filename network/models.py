@@ -38,3 +38,12 @@ class Post(models.Model):
     def __str__(self):
         return f"<{self.pk}: post by {self.poster}>"
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "content": self.content,
+            "timestamp": self.timestamp,
+            "likes": [user.email for user in self.likes.all()],
+            "poster": self.poster.username
+        }
+

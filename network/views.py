@@ -77,3 +77,12 @@ def new_post(request):
                    poster=request.user)
     newpost.save()
     return JsonResponse({"message": "Post saved successfully."}, status=201)
+
+def get_posts(request):
+    posts = Post.objects.all()
+    posts = posts.order_by("-timestamp").all()
+    for post in posts:
+        print(post.serialize())
+    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+
