@@ -18,6 +18,13 @@ class User(AbstractUser):
     def __str__(self):
         return f"<{self.pk}: {self.username}>"
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+        }
+
 
 class Post(models.Model):
     """
@@ -42,8 +49,8 @@ class Post(models.Model):
         return {
             "id": self.id,
             "content": self.content,
-            "timestamp": self.timestamp,
-            "likes": [user.email for user in self.likes.all()],
+            "timestamp": self.timestamp.strftime("%b %d, %Y %-I:%M %p"),
+            "likes": len(self.likes.all()),
             "poster": self.poster.username
         }
 

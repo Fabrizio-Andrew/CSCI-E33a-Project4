@@ -79,6 +79,9 @@ def new_post(request):
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
 def get_posts(request):
+    """
+    Returns all posts ordered chronologically beginning with the most recent.
+    """
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
     for post in posts:
