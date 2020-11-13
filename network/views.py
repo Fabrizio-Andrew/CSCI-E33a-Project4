@@ -95,4 +95,17 @@ def get_posts(request, username='null'):
 def get_profile(request, username):
     user = User.objects.get(username=username)
     print(user.serialize())
-    return JsonResponse(user.serialize(), safe=False)
+    return JsonResponse({
+        "requestor": request.user.username,
+        "response": user.serialize()
+    }, 
+    safe=False)
+
+@login_required
+def get_following(request):
+    user = request.user
+    return JsonResponse({
+        "user": user.username,
+        "following": user.following()
+    }, 
+    safe=False)

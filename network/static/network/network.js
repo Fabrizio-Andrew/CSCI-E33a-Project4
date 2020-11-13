@@ -124,8 +124,25 @@ function load_profile(user) {
 
         document.querySelector('#profile-view').append(username, followers, following);
 
+        if (result.requestor === result.response.username) {
+            console.log("User's Profile")
+        } else {
+            // put button here
+        }
+
         // Get posts for user
         load_userposts(result.username);
     });
+
+    // Fetch current user's followers
+    fetch('/following')
+    .then(response => response.json())
+    .then(result => {
+         {
+            console.log("User's Profile")
+        }
+    });
+    // If profile page does not belong to the current user
+
     return false;
 }

@@ -27,6 +27,12 @@ class User(AbstractUser):
             "following": len(User.objects.filter(followers=self))
         }
 
+    def following(self):
+        followinglist = []
+        for user in User.objects.filter(followers=self):
+            followinglist.append(user.username)
+        return followinglist
+
 
 class Post(models.Model):
     """
