@@ -78,14 +78,21 @@ def new_post(request):
     newpost.save()
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
-def get_posts(request):
+def get_posts(request, username='null'):
     """
     Returns all posts ordered chronologically beginning with the most recent.
     """
-    posts = Post.objects.all()
+    if username != 'null':
+        user = User.objects.get(username=username)
+        posts = Post.objects.filter(poster=user)
+    else:
+        posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
     for post in posts:
         print(post.serialize())
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
-
+def get_profile(request, username):
+    user = User.objects.get(username=username)
+    print(user.serialize())
+    return JsonResponse(user.serialize(), safe=False)

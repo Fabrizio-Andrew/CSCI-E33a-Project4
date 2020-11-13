@@ -23,6 +23,8 @@ class User(AbstractUser):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "followers": len(self.followers.all()),
+            "following": len(User.objects.filter(followers=self))
         }
 
 
