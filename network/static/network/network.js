@@ -148,8 +148,6 @@ function load_profile(user) {
                     // Reload profile page view
                     load_profile(result.response.username);
                 });
-
-                
             }
 
             // Check if requestor is in the current profile's list of followers to display button text
@@ -167,9 +165,7 @@ function load_profile(user) {
 
         // Get posts for user
         load_userposts(result.response.username);
-
-    // Prevent default behavior
-    
     });
+    // Prevent default behavior
     return false;
 }

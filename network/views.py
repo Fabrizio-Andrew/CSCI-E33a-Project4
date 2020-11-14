@@ -78,19 +78,27 @@ def new_post(request):
     newpost.save()
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
-def get_posts(request, username='null'):
+def get_posts(request, username='null', followflag=0):
     """
     Returns all posts ordered chronologically beginning with the most recent.
     """
-    if username != 'null':
+    if followflag == 1:
+        user = request.user
+
+        # Get all posts authored by users followed by the currently logged-in user
+        posts = Post.objects.filter(poster__in=User.objects.filter(followers=user))
+
+    elif username != 'null':
         user = User.objects.get(username=username)
         posts = Post.objects.filter(poster=user)
+
     else:
         posts = Post.objects.all()
+
     posts = posts.order_by("-timestamp").all()
-    for post in posts:
-        print(post.serialize())
+
     return JsonResponse([post.serialize() for post in posts], safe=False)
+
 
 def get_profile(request, username):
     user = User.objects.get(username=username)
