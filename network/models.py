@@ -19,12 +19,17 @@ class User(AbstractUser):
         return f"<{self.pk}: {self.username}>"
 
     def serialize(self):
+        followerslist = []
+        for follower in self.followers.all():
+            followername = follower.username
+            followerslist.append(followername)
         return {
             "id": self.id,
             "username": self.username,
             "email": self.email,
-            "followers": len(self.followers.all()),
-            "following": len(User.objects.filter(followers=self))
+            "followernames": followerslist,
+            "followerscount": len(followerslist),
+            "followingcount": len(User.objects.filter(followers=self))
         }
 
     def following(self):

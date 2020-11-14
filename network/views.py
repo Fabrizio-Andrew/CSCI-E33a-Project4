@@ -105,7 +105,31 @@ def get_profile(request, username):
 def get_following(request):
     user = request.user
     return JsonResponse({
+        "requestor": request.user.username,
         "user": user.username,
         "following": user.following()
     }, 
     safe=False)
+
+@csrf_exempt
+@login_required
+def toggle_follow(request):
+    """
+    Toggle whether the requestor is following the user.
+    """
+    if request.method != "PUT":
+        return JsonResponse({"error": "PUT request required."}, status=400)
+    print(request.user)
+    user = request.user
+    data = json.loads(request.body)
+    target = User.objects.get(username=data.get("target", ""))
+
+    # If the user already follows the target, unfollow.  Otherwise, follow.
+    if User.objects.filter(pk=target.pk, followers__pk=user.pk):
+    # user in target.followers:
+        target.followers.remove(user)
+        return JsonResponse({"message": "User unfollowed successfully."}, status=201)
+    else:
+        target.followers.add(user)
+        return JsonResponse({"message": "User followed successfully."}, status=201)
+    

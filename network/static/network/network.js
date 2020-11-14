@@ -70,7 +70,6 @@ function render_posts(posts) {
 
     // Create div with info/hyperlink for each email in response
     posts.forEach(function(post) { 
-        console.log(post);
 
         var div = document.createElement('div');
         div.className = 'post-div';
@@ -104,6 +103,9 @@ function render_posts(posts) {
 
 function load_profile(user) {
     
+    // Clear profile view
+    document.querySelector('#profile-view').innerHTML = '';
+
     // Show profile view
     document.querySelector('#profile-view').style.display = 'block';
 
@@ -114,35 +116,60 @@ function load_profile(user) {
 
         // Create elements for profile info    
         var username = document.createElement('p');
-        username.innerHTML = `${result.username}'s Profile Page`;
+        username.innerHTML = `${result.response.username}'s Profile Page`;
 
         var followers = document.createElement('p');
-        followers.innerHTML = `Followers: ${result.followers}`;
+        followers.innerHTML = `Followers: ${result.response.followerscount}`;
 
         var following = document.createElement('p');
-        following.innerHTML = `Following: ${result.following}`;
+        following.innerHTML = `Following: ${result.response.followingcount}`;
 
+        // Append these three elements to the profile view
         document.querySelector('#profile-view').append(username, followers, following);
 
-        if (result.requestor === result.response.username) {
-            console.log("User's Profile")
-        } else {
-            // put button here
+        if (result.requestor !== result.response.username) {
+
+            // Create follow/unfollow button
+            var followbutton = document.createElement('button');
+            followbutton.className = "btn btn-primary";
+            
+            // When the follow button is clicked, call toggle_follow function
+            followbutton.onclick = function() {
+                fetch('/follow', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        target: result.response.username
+                    })
+                })
+                // Print result
+                .then(response => response.json())
+                .then(message => {
+                    console.log(message);
+                    // Reload profile page view
+                    load_profile(result.response.username);
+                });
+
+                
+            }
+
+            // Check if requestor is in the current profile's list of followers to display button text
+            if (result.response.followernames.includes(result.requestor)) {
+                followbutton.innerHTML = "UnFollow";
+                console.log("Unfollowed");
+            } else {
+                followbutton.innerHTML = "Follow";
+                console.log("Followed");
+            }
+            
+            // Append the follow/unfollow button to the profile view
+            document.querySelector('#profile-view').append(followbutton);
         }
 
         // Get posts for user
-        load_userposts(result.username);
-    });
+        load_userposts(result.response.username);
 
-    // Fetch current user's followers
-    fetch('/following')
-    .then(response => response.json())
-    .then(result => {
-         {
-            console.log("User's Profile")
-        }
+    // Prevent default behavior
+    
     });
-    // If profile page does not belong to the current user
-
     return false;
 }
