@@ -78,6 +78,25 @@ def new_post(request):
     newpost.save()
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
+@csrf_exempt
+@login_required
+def edit_post(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    data = json.loads(request.body)
+    print(data)
+    post = Post.objects.get(id=data["post_id"])
+
+    # Confirm that the requestor is the owner of the post
+    if request.user != post.poster:
+        return JsonResponse({"error": "User is not the author of this post."}, status=400)
+    
+    post.content = data["content"]
+    post.save()
+    return JsonResponse({"message": "Post updated successfully."}, status=201)
+
+
 def get_posts(request, username='null', followflag=0):
     """
     Returns all posts ordered chronologically beginning with the most recent.
@@ -97,7 +116,11 @@ def get_posts(request, username='null', followflag=0):
 
     posts = posts.order_by("-timestamp").all()
 
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    return JsonResponse({
+        "requestor": request.user.username,
+        "response": [post.serialize() for post in posts]
+    },
+    safe=False)
 
 
 def get_profile(request, username):

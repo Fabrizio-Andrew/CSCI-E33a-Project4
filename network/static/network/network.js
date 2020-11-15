@@ -73,8 +73,8 @@ function load_followingposts() {
     return false;
 }
 
-
-function render_posts(posts) {
+///////////////////////////   JUST ADDED REQUESTOR NAME TO THIS PACKAGE - NEED TO COMPARE AGAINST POSTER FOR EDIT BUTTON
+function render_posts(package) {
 
     // Clear timeline view
     document.querySelector('#timeline-view').innerHTML = '';
@@ -84,19 +84,23 @@ function render_posts(posts) {
     document.querySelector('#newpost-view').style.display = 'none';
 
     // Create div with info/hyperlink for each email in response
-    posts.forEach(function(post) { 
+    package.response.forEach(function(post) { 
 
         var div = document.createElement('div');
         div.className = 'post-div';
+        div.id = `post_${post.id}`;
 
         var username = document.createElement('a');
         username.className = 'username-line';
         username.href = '';
         username.innerHTML = `User: ${post.poster}`;
         
+        // Open user profile when the username is clicked
+        username.onclick = () => load_profile(post.poster);
+
         var content = document.createElement('p');
         content.className = 'post-content';
-        content.innerHTML = `${post.content}`;
+        content.innerHTML = post.content;
 
         var time = document.createElement('p');
         time.className = 'timestamp';
@@ -105,15 +109,77 @@ function render_posts(posts) {
         var likes = document.createElement('p');
         likes.className = 'likes';
         likes.innerHTML = `Likes: ${post.likes}`;
-
-
-        // Open user profile when the username is clicked
-        username.onclick = () => load_profile(post.poster);
-        
+      
         // Append elements to post div and post div to timeline view
         div.append(username, content, time, likes);
+        
+        // If post belongs to current user, add "edit" button
+        if (package.requestor === post.poster) {
+            var editlink = document.createElement('a');
+            editlink.className = 'editlink'
+            editlink.innerHTML = 'Edit';
+            editlink.href = '';
+            editlink.onclick = () => edit_post(post);
+            div.append(editlink);
+        }
         document.querySelector('#timeline-view').append(div);
     }); 
+}
+
+function edit_post(post) {
+    
+    console.log(post.id);
+    var div = document.querySelector(`#post_${post.id}`);
+
+
+    // Hide all children of the post's div
+    var children = div.childNodes;
+    for (var i=0; i<children.length; i++) {
+        console.log(children[i]);
+        children[i].style.display = 'none';
+    }
+
+    // Create elements for edit form
+    textarea = document.createElement('textarea');
+    textarea.className = 'form-control';
+    textarea.value = post.content;
+
+    submitbutton = document.createElement('input');
+    submitbutton.type = 'submit';
+    submitbutton.className = 'btn btn-primary';
+    submitbutton.onclick = function () {
+        fetch('/editpost', {
+            method: 'POST',
+            body: JSON.stringify({
+                post_id: post.id,
+                content: textarea.value
+            })
+        })
+        // Print result
+        .then(response => response.json())
+        .then(result => {
+            console.log(result);
+        
+
+            
+            // Set the post's content to the new value
+            div.querySelector('.post-content').innerHTML = textarea.value;
+
+            // Remove the textarea and submit button
+            textarea.remove();
+            submitbutton.remove();
+
+            // Unhide post content
+            var children = div.childNodes;
+            for (var i=0; i<children.length; i++) {
+                console.log(children[i]);
+                children[i].style.display = 'block';
+            }
+        });
+    }
+    div.append(textarea, submitbutton);
+    
+    return false;
 }
 
 function load_profile(user) {
