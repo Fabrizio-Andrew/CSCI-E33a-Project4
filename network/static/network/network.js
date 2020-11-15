@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Use buttons to toggle between views
+    // Use the "Post" link to create a new post
     document.querySelector('#newpost').onclick = () => compose();
+
+    document.querySelector('#following').onclick = () => load_followingposts();
 
     // Load timeline by default
     load_allposts();
@@ -37,10 +39,6 @@ function compose() {
 
 function load_allposts() {
 
-    // Show timeline view and hide new post view
-    document.querySelector('#timeline-view').style.display = 'block';
-    document.querySelector('#newpost-view').style.display = 'none';
-
     // Fetch all posts
     fetch('/posts')
     .then(response => response.json())
@@ -50,11 +48,8 @@ function load_allposts() {
 }
 
 function load_userposts(username) {
-    // Show timeline view and hide new post view
-    document.querySelector('#timeline-view').style.display = 'block';
-    document.querySelector('#newpost-view').style.display = 'none';
 
-    // Fetch all posts
+    // Fetch posts belonging to "username"
     fetch(`/posts/${username}`)
     .then(response => response.json())
     .then(result => {
@@ -62,11 +57,31 @@ function load_userposts(username) {
     });
 }
 
+function load_followingposts() {
+
+    // Hide the profile view. (Other views are hidden/displayed in render_posts())
+    document.querySelector('#profile-view').style.display = 'none';
+
+    // Fetch posts belonging to users followed by the requestor
+    // NOTE: The word "following" is submitted as the username to the URL dispatcher here...  
+    // It doesn't matter, because it's not used by the back end in this case.
+    fetch(`/posts/following/1`)
+    .then(response => response.json())
+    .then(result => {
+        render_posts(result);
+    });
+    return false;
+}
+
 
 function render_posts(posts) {
 
     // Clear timeline view
     document.querySelector('#timeline-view').innerHTML = '';
+
+    // Show timeline view and hide new post view
+    document.querySelector('#timeline-view').style.display = 'block';
+    document.querySelector('#newpost-view').style.display = 'none';
 
     // Create div with info/hyperlink for each email in response
     posts.forEach(function(post) { 
