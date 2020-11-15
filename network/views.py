@@ -171,11 +171,11 @@ def toggle_like(request):
         return JsonResponse({"error": "PUT request required."}, status=400)
     user = request.user
     data = json.loads(request.body)
-    post = User.objects.get(id=data.get("target",""))
+    post = Post.objects.get(id=data.get("post",""))
 
-    if post.objects.filter(pk=post.pk, likes__pk=user.pk):
+    if Post.objects.filter(pk=post.pk, likes__pk=user.pk):
         post.likes.remove(user)
-        return JsonResponse({"message": "Post unliked successfully."}, status=201)
+        return JsonResponse({"message": "Unliked"}, status=201)
     else:
         post.likes.add(user)
-        return JsonResponse({"message": "Post liked successfully."}, status=201)
+        return JsonResponse({"message": "Liked"}, status=201)

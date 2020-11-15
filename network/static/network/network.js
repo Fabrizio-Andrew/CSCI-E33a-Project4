@@ -73,7 +73,6 @@ function load_followingposts() {
     return false;
 }
 
-///////////////////////////   JUST ADDED REQUESTOR NAME TO THIS PACKAGE - NEED TO COMPARE AGAINST POSTER FOR EDIT BUTTON
 function render_posts(package) {
 
     // Clear timeline view
@@ -106,12 +105,11 @@ function render_posts(package) {
         time.className = 'timestamp';
         time.innerHTML = `${post.timestamp}`;
 
-        var likes = document.createElement('p');
-        likes.className = 'likes';
-        likes.innerHTML = `Likes: ${post.likescount}`;
+        var likesdiv = document.createElement('div')
+        like_post(post, package.requestor, likesdiv);
       
         // Append elements to post div and post div to timeline view
-        div.append(username, content, time, likes);
+        div.append(username, content, time, likesdiv);
         
         // If post belongs to current user, add "edit" button
         if (package.requestor === post.poster) {
@@ -182,8 +180,56 @@ function edit_post(post) {
     return false;
 }
 
-function like_post(post) {
-    pass
+function like_post(post, user, div) {
+    
+    console.log(post);
+    console.log(div);
+    var likescount = post.likescount;
+
+    // Clear the div
+    div.innerHTML = '';
+
+    // Show the likes count
+    var likes = document.createElement('p');
+    likes.className = 'likes';
+    likes.innerHTML = `Likes: ${likescount}`;
+
+    // Create the like button
+    var likebutton = document.createElement('button');
+    likebutton.className = 'btn btn-primary';
+
+    // When the like button is clicked, call toggle_like function
+    likebutton.onclick = function() {
+        fetch('/like', {
+            method: 'PUT',
+            body: JSON.stringify({
+                post: post.id
+            })
+        })
+        // Print result
+        .then(response => response.json())
+        .then(message => {
+            console.log(message);
+            // Reload like button and likes count
+            if (message.message === 'Liked') {
+                likebutton.innerHTML = 'Unlike';
+                likescount++;
+            } else if (message.message === 'Unliked') {
+                likebutton.innerHTML = 'Like'
+                likescount--;
+            }
+            likes.innerHTML = `Likes: ${likescount}`;
+        });
+    }
+    // Set the innerHTML based on like status
+    if (post.likes.includes(user)) {
+        likebutton.innerHTML = 'Unlike';
+    } else {
+        likebutton.innerHTML = 'Like';
+    }
+
+    div.append(likes, likebutton);
+
 }
 
 function load_profile(user) {
@@ -238,10 +284,8 @@ function load_profile(user) {
             // Check if requestor is in the current profile's list of followers to display button text
             if (result.response.followernames.includes(result.requestor)) {
                 followbutton.innerHTML = "UnFollow";
-                console.log("Unfollowed");
             } else {
                 followbutton.innerHTML = "Follow";
-                console.log("Followed");
             }
             
             // Append the follow/unfollow button to the profile view
