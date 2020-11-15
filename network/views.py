@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from .models import User, Post
 
@@ -97,7 +98,7 @@ def edit_post(request):
     return JsonResponse({"message": "Post updated successfully."}, status=201)
 
 
-def get_posts(request, username='null', followflag=0):
+def get_posts(request, pagenumber, username='null', followflag=0):
     """
     Returns all posts ordered chronologically beginning with the most recent.
     """
@@ -115,11 +116,21 @@ def get_posts(request, username='null', followflag=0):
         posts = Post.objects.all()
 
     posts = posts.order_by("-timestamp").all()
-    return JsonResponse({
+    serialized = [post.serialize() for post in posts]
+    paginated = Paginator(serialized, 10)
+    p = paginated.page(pagenumber)
+
+    package = {
         "requestor": request.user.username,
-        "response": [post.serialize() for post in posts]
-    },
-    safe=False)
+        "response": p.object_list
+    }
+
+    if p.has_next():
+        package['nextpage'] = p.next_page_number()
+    if p.has_previous():
+        package['prevpage'] = p.previous_page_number()
+
+    return JsonResponse(package, safe=False)
 
 
 def get_profile(request, username):
