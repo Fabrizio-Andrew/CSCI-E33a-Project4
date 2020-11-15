@@ -149,17 +149,33 @@ def toggle_follow(request):
     """
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required."}, status=400)
-    print(request.user)
     user = request.user
     data = json.loads(request.body)
     target = User.objects.get(username=data.get("target", ""))
 
     # If the user already follows the target, unfollow.  Otherwise, follow.
     if User.objects.filter(pk=target.pk, followers__pk=user.pk):
-    # user in target.followers:
         target.followers.remove(user)
         return JsonResponse({"message": "User unfollowed successfully."}, status=201)
     else:
         target.followers.add(user)
         return JsonResponse({"message": "User followed successfully."}, status=201)
-    
+
+@csrf_exempt
+@login_required
+def toggle_like(request):
+    """
+    Toggle whether the requestor "likes" a post.
+    """
+    if request.method != "PUT":
+        return JsonResponse({"error": "PUT request required."}, status=400)
+    user = request.user
+    data = json.loads(request.body)
+    post = User.objects.get(id=data.get("target",""))
+
+    if post.objects.filter(pk=post.pk, likes__pk=user.pk):
+        post.likes.remove(user)
+        return JsonResponse({"message": "Post unliked successfully."}, status=201)
+    else:
+        post.likes.add(user)
+        return JsonResponse({"message": "Post liked successfully."}, status=201)
