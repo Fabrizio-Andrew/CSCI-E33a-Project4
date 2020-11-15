@@ -37,13 +37,33 @@ function compose() {
     return false;
 }
 
-function load_allposts() {
+function load_allposts(pagenumber=1) {
 
     // Fetch all posts
-    fetch('/posts')
+    fetch(`/posts/${pagenumber}`)
     .then(response => response.json())
-    .then(result => {
-        render_posts(result);
+    .then(package => {
+        render_posts(package);
+
+        // Create next page & previous page buttons (if applicable)
+        if (package.prevflag === true) {
+            var prevbutton = document.createElement('button');
+            prevbutton.className = 'btn btn-primary';
+            prevbutton.innerHTML = '< Previous';
+            prevbutton.onclick = () => load_allposts(package.prevpage);
+
+            document.querySelector('#timeline-view').append(prevbutton);
+        }
+        
+        if (package.nextflag === true) {
+            var nextbutton = document.createElement('button');
+            nextbutton.className = 'btn btn-primary';
+            nextbutton.innerHTML = 'Next >';
+            nextbutton.onclick = () => load_allposts(package.nextpage);
+
+            document.querySelector('#timeline-view').append(nextbutton);
+        }
+    
     });
 }
 
@@ -53,7 +73,7 @@ function load_userposts(username) {
     fetch(`/posts/${username}`)
     .then(response => response.json())
     .then(result => {
-        render_posts(result);
+        render_posts(result, 1);
     });
 }
 
@@ -68,7 +88,7 @@ function load_followingposts() {
     fetch(`/posts/following/1`)
     .then(response => response.json())
     .then(result => {
-        render_posts(result);
+        render_posts(result, 1);
     });
     return false;
 }
@@ -121,6 +141,7 @@ function render_posts(package) {
             div.append(editlink);
         }
         document.querySelector('#timeline-view').append(div);
+
     }); 
 }
 
