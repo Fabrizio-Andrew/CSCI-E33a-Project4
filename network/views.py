@@ -115,7 +115,6 @@ def get_posts(request, username='null', followflag=0):
         posts = Post.objects.all()
 
     posts = posts.order_by("-timestamp").all()
-
     return JsonResponse({
         "requestor": request.user.username,
         "response": [post.serialize() for post in posts]

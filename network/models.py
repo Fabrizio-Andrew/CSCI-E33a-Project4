@@ -32,11 +32,11 @@ class User(AbstractUser):
             "followingcount": len(User.objects.filter(followers=self))
         }
 
-    def following(self):
-        followinglist = []
-        for user in User.objects.filter(followers=self):
-            followinglist.append(user.username)
-        return followinglist
+#    def following(self):
+#        followinglist = []
+#        for user in User.objects.filter(followers=self):
+#            followinglist.append(user.username)
+#        return followinglist
 
 
 class Post(models.Model):
@@ -59,11 +59,15 @@ class Post(models.Model):
         return f"<{self.pk}: post by {self.poster}>"
 
     def serialize(self):
+        likeslist = []
+        for user in self.likes.all():
+            likeslist.append(user.username)
         return {
             "id": self.id,
             "content": self.content,
             "timestamp": self.timestamp.strftime("%b %d, %Y %-I:%M %p"),
-            "likes": len(self.likes.all()),
+            "likes": likeslist,
+            "likescount": len(self.likes.all()),
             "poster": self.poster.username
         }
 

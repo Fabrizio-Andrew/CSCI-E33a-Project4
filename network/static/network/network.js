@@ -108,7 +108,7 @@ function render_posts(package) {
 
         var likes = document.createElement('p');
         likes.className = 'likes';
-        likes.innerHTML = `Likes: ${post.likes}`;
+        likes.innerHTML = `Likes: ${post.likescount}`;
       
         // Append elements to post div and post div to timeline view
         div.append(username, content, time, likes);
@@ -180,6 +180,10 @@ function edit_post(post) {
     div.append(textarea, submitbutton);
     
     return false;
+}
+
+function like_post(post) {
+    pass
 }
 
 function load_profile(user) {
