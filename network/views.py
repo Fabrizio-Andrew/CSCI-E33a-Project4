@@ -122,7 +122,9 @@ def get_posts(request, pagenumber, username='null', followflag=0):
 
     package = {
         "requestor": request.user.username,
-        "response": p.object_list
+        "response": p.object_list,
+        "nextflag": p.has_next(),
+        "prevflag": p.has_previous()
     }
 
     if p.has_next():
