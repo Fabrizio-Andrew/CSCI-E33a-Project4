@@ -1,9 +1,16 @@
+"""
+Network Views Module
+
+This module contains functions that support all logic for addiing, removing,
+updating, and displaying data associated with the Network app.
+"""
+
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import JsonResponse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -70,27 +77,30 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
+
 @csrf_exempt
 @login_required
 def new_post(request):
     """
-    Given a new post's information via POST, create a Post object instance in the DB.
+    Given a new post's information via POST, create a Post object
+    instance in the DB.
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
-        
+
     data = json.loads(request.body)
     newpost = Post(content=data.get("content", ""),
                    poster=request.user)
     newpost.save()
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
+
 @csrf_exempt
 @login_required
 def edit_post(request):
     """
-    Given an existing post's id and updated text, update the Post object's content only if
-    the currently logged-in user is the owner of the post.
+    Given an existing post's id and updated text, update the Post object's
+    content only if the currently logged-in user is the owner of the post.
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
@@ -101,28 +111,27 @@ def edit_post(request):
 
     # Confirm that the requestor is the owner of the post
     if request.user == post.poster:
-        
+
         # Update the post content and save
         post.content = data["content"]
         post.save()
         return JsonResponse({"message": "Post updated successfully."}, status=201)
 
     return JsonResponse({"error": "User is not the author of this post."}, status=400)
-    
-    
 
 
 def get_posts(request, pagenumber, username='null', followflag=0):
     """
-    Returns posts ordered chronologically beginning with the most recent and paginated
-    to 10 results-per-page.
+    Returns posts ordered chronologically beginning with the most
+    recent and paginated to 10 results-per-page.
 
-    If the "followflag" = 1, the function retrieves only posts belonging to users who
-    the currently logged-in user follows.
+    If the "followflag" = 1, the function retrieves only posts
+    belonging to users who the currently logged-in user follows.
 
-    If the "followflag" = 0, but a username is submitted, the function retrieves only posts
-    belonging to that username.
-    NOTE: Usernames are required to be unique according to the User class in models.py.
+    If the "followflag" = 0, but a username is submitted, the
+    function retrieves only posts belonging to that username.
+    NOTE: Usernames are required to be unique according to the
+    User class in models.py.
 
     Otherwise, the function returns all Post objects.
     """
@@ -131,7 +140,7 @@ def get_posts(request, pagenumber, username='null', followflag=0):
     if followflag == 1:
         user = request.user
 
-        # Get all posts authored by users followed by the currently logged-in user
+        # Get all posts authored by users followed by the requestor
         posts = Post.objects.filter(poster__in=User.objects.filter(followers=user))
 
     elif username != 'null':
@@ -145,21 +154,21 @@ def get_posts(request, pagenumber, username='null', followflag=0):
     posts = posts.order_by("-timestamp").all()
     serialized = [post.serialize() for post in posts]
     paginated = Paginator(serialized, 10)
-    p = paginated.page(pagenumber)
+    resultspage = paginated.page(pagenumber)
 
     # Prepare JSON package for response
     package = {
         "requestor": request.user.username,
-        "response": p.object_list,
-        "nextflag": p.has_next(),
-        "prevflag": p.has_previous()
+        "response": resultspage.object_list,
+        "nextflag": resultspage.has_next(),
+        "prevflag": resultspage.has_previous()
     }
 
-    # If next or previous pages exist, include those page numbers in the JSON package
-    if p.has_next():
-        package['nextpage'] = p.next_page_number()
-    if p.has_previous():
-        package['prevpage'] = p.previous_page_number()
+    # If next/previous pages exist, include page numbers in the JSON package
+    if resultspage.has_next():
+        package['nextpage'] = resultspage.next_page_number()
+    if resultspage.has_previous():
+        package['prevpage'] = resultspage.previous_page_number()
 
     return JsonResponse(package, safe=False)
 
@@ -168,14 +177,15 @@ def get_profile(request, username):
     """
     Given a username, return the user's profile info.
 
-    NOTE: Usernames are required to be unique according to the User class in models.py.
+    NOTE: Usernames are required to be unique according to the
+    User class in models.py.
     """
     user = User.objects.get(username=username)
     return JsonResponse({
         "requestor": request.user.username,
         "response": user.serialize()
-    }, 
-    safe=False)
+    }, safe=False)
+
 
 @login_required
 def get_following(request):
@@ -187,14 +197,15 @@ def get_following(request):
         "requestor": request.user.username,
         "user": user.username,
         "following": user.following()
-    }, 
-    safe=False)
+    }, safe=False)
+
 
 @csrf_exempt
 @login_required
 def toggle_follow(request):
     """
-    Toggle whether the requestor is following the user submitted via PUT (the "target").
+    Toggle whether the requestor is following the user
+    submitted via PUT (the "target").
     """
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required."}, status=400)
@@ -208,9 +219,9 @@ def toggle_follow(request):
     if User.objects.filter(pk=target.pk, followers__pk=user.pk):
         target.followers.remove(user)
         return JsonResponse({"message": "User unfollowed successfully."}, status=201)
-    else:
-        target.followers.add(user)
-        return JsonResponse({"message": "User followed successfully."}, status=201)
+    target.followers.add(user)
+    return JsonResponse({"message": "User followed successfully."}, status=201)
+
 
 @csrf_exempt
 @login_required
@@ -224,12 +235,11 @@ def toggle_like(request):
     # Access currently logged-in user and the target post
     user = request.user
     data = json.loads(request.body)
-    post = Post.objects.get(id=data.get("post",""))
+    post = Post.objects.get(id=data.get("post", ""))
 
     # If the user already likes this post, unlike.  Otherwise, like.
     if Post.objects.filter(pk=post.pk, likes__pk=user.pk):
         post.likes.remove(user)
         return JsonResponse({"message": "Unliked"}, status=201)
-    else:
-        post.likes.add(user)
-        return JsonResponse({"message": "Liked"}, status=201)
+    post.likes.add(user)
+    return JsonResponse({"message": "Liked"}, status=201)

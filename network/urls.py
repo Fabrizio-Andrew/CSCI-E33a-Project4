@@ -1,3 +1,6 @@
+"""
+Connects url paths, methods from views.py, and related names.
+"""
 
 from django.urls import path
 

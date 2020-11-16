@@ -1,3 +1,14 @@
+"""
+Network Data Models:
+This module outlines 2 object classes: User and Post.
+
+Models are configured to configure a sqlite database titled db.sqlite3.
+Before running the app, this document must be established via the following shell commands:
+$ python manage.py makemigrations
+$ python manage.py migrate
+"""
+
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -72,4 +83,3 @@ class Post(models.Model):
             "likescount": len(self.likes.all()),
             "poster": self.poster.username
         }
-
