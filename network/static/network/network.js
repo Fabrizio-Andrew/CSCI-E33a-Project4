@@ -1,10 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Use the "Post" link to create a new post
-    document.querySelector('#newpost').onclick = () => compose();
+    // Use the "Post" link (if it exists) to create a new post
+    // CITATION: If statement logic taken from https://stackoverflow.com/questions/5629684/how-can-i-check-if-an-element-exists-in-the-visible-dom
+    var newpostlink = document.querySelector('#newpost');
+    if (typeof(newpostlink) != 'undefined' && newpostlink != null) {
+        newpostlink.onclick = () => compose();
+    }
 
-    // Use the "following" link to get a lists of posts from everyone who the current user follows
-    document.querySelector('#following').onclick = () => load_followingposts();
+    // Use the "following" link (if it exists) to get a lists of posts from everyone who the current user follows
+    var followinglink = document.querySelector('#following');
+    if (typeof(followinglink) != 'undefined' && followinglink != null) {
+        followinglink.onclick = () => load_followingposts();
+    }
 
     // Load all posts by default
     load_allposts();
@@ -71,10 +78,10 @@ function load_allposts(pagenumber=1) {
     });
 }
 
-function load_userposts(username) {
+function load_userposts(username, pagenumber=1) {
 
     // Fetch posts belonging to "username"
-    fetch(`/posts/${username}`)
+    fetch(`/posts/${username}/${pagenumber}`)
     .then(response => response.json())
     .then(package => {
         render_posts(package);
@@ -85,7 +92,7 @@ function load_userposts(username) {
             var prevbutton = document.createElement('button');
             prevbutton.className = 'btn btn-primary';
             prevbutton.innerHTML = '< Previous';
-            prevbutton.onclick = () => load_userposts(package.prevpage);
+            prevbutton.onclick = () => load_userposts(username, package.prevpage);
 
             document.querySelector('#timeline-view').append(prevbutton);
         }
@@ -95,21 +102,21 @@ function load_userposts(username) {
             var nextbutton = document.createElement('button');
             nextbutton.className = 'btn btn-primary';
             nextbutton.innerHTML = 'Next >';
-            nextbutton.onclick = () => load_userposts(package.nextpage);
+            nextbutton.onclick = () => load_userposts(username, package.nextpage);
 
             document.querySelector('#timeline-view').append(nextbutton);
         }
     });
 }
 
-function load_followingposts() {
+function load_followingposts(pagenumber=1) {
 
     // Hide the profile view. (Other views are hidden/displayed in render_posts())
     document.querySelector('#profile-view').style.display = 'none';
 
     // Fetch posts belonging to users followed by the requestor
     // NOTE: The word "following" is submitted as a placeholder for the username to the URL dispatcher here.
-    fetch(`/posts/following/1`)
+    fetch(`/posts/following/${pagenumber}/1`)
     .then(response => response.json())
     .then(package => {
         render_posts(package);
@@ -262,47 +269,50 @@ function like_post(post, user, div) {
     likes.className = 'likes';
     likes.innerHTML = `Likes: ${likescount}`;
 
-    // Create the like button
-    var likebutton = document.createElement('button');
-    likebutton.className = 'btn btn-primary';
+    // Append the Likes count to this post's likes div
+    div.append(likes);
 
-    // Set the innerHTML based on like status from API 
-    if (post.likes.includes(user)) {
-        likebutton.innerHTML = 'Unlike';
-    } else {
-        likebutton.innerHTML = 'Like';
-    }
+    // Create the like button - only if a user is logged in
+    if (user !== '') {
+        var likebutton = document.createElement('button');
+        likebutton.className = 'btn btn-primary';
 
-    // When the like button is clicked, call toggle_like function
-    likebutton.onclick = function() {
-        fetch('/like', {
-            method: 'PUT',
-            body: JSON.stringify({
-                post: post.id
+        // Set the innerHTML based on like status from API 
+        if (post.likes.includes(user)) {
+            likebutton.innerHTML = 'Unlike';
+        } else {
+            likebutton.innerHTML = 'Like';
+        }
+
+        // When the like button is clicked, call toggle_like function
+        likebutton.onclick = function() {
+            fetch('/like', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    post: post.id
+                })
             })
-        })
-        // Print result
-        .then(response => response.json())
-        .then(message => {
-            console.log(message);
+            // Print result
+            .then(response => response.json())
+            .then(message => {
+                console.log(message);
 
-            // Set the likescount and like button text based on server response
-            if (message.message === 'Liked') {
-                likebutton.innerHTML = 'Unlike';
-                likescount++;
-            } else if (message.message === 'Unliked') {
-                likebutton.innerHTML = 'Like'
-                likescount--;
-            }
+                // Set the likescount and like button text based on server response
+                if (message.message === 'Liked') {
+                    likebutton.innerHTML = 'Unlike';
+                    likescount++;
+                } else if (message.message === 'Unliked') {
+                    likebutton.innerHTML = 'Like'
+                    likescount--;
+                }
 
-            // Reload the likescount in the UI
-            likes.innerHTML = `Likes: ${likescount}`;
-        });
+                // Reload the likescount in the UI
+                likes.innerHTML = `Likes: ${likescount}`;
+            });
+        }
+        // Append the Like/Unlike button to this post's likes div
+        div.append(likebutton);
     }
-
-    // Append the Likes count and Like/unlike button to this post's likes div
-    div.append(likes, likebutton);
-
 }
 
 function load_profile(user) {
@@ -334,8 +344,8 @@ function load_profile(user) {
         // Append these three elements to the profile view
         document.querySelector('#profile-view').append(username, followers, following);
 
-        // Check that this page does not belong to the current user
-        if (result.requestor !== result.response.username) {
+        // Check that user is logged in and this page does not belong to the current user
+        if (result.requestor !== '' && result.requestor !== result.response.username) {
 
             // Create follow/unfollow button
             var followbutton = document.createElement('button');
