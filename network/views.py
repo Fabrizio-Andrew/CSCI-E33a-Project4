@@ -13,6 +13,9 @@ from .models import User, Post
 
 
 def index(request):
+    """
+    Render the default view.
+    """
     return render(request, "network/index.html")
 
 
@@ -70,6 +73,9 @@ def register(request):
 @csrf_exempt
 @login_required
 def new_post(request):
+    """
+    Given a new post's information via POST, create a Post object instance in the DB.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
         
@@ -82,26 +88,46 @@ def new_post(request):
 @csrf_exempt
 @login_required
 def edit_post(request):
+    """
+    Given an existing post's id and updated text, update the Post object's content only if
+    the currently logged-in user is the owner of the post.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
 
+    # Retrieve the specified Post object
     data = json.loads(request.body)
-    print(data)
     post = Post.objects.get(id=data["post_id"])
 
     # Confirm that the requestor is the owner of the post
-    if request.user != post.poster:
-        return JsonResponse({"error": "User is not the author of this post."}, status=400)
+    if request.user == post.poster:
+        
+        # Update the post content and save
+        post.content = data["content"]
+        post.save()
+        return JsonResponse({"message": "Post updated successfully."}, status=201)
+
+    return JsonResponse({"error": "User is not the author of this post."}, status=400)
     
-    post.content = data["content"]
-    post.save()
-    return JsonResponse({"message": "Post updated successfully."}, status=201)
+    
 
 
 def get_posts(request, pagenumber, username='null', followflag=0):
     """
-    Returns all posts ordered chronologically beginning with the most recent.
+    Returns posts ordered chronologically beginning with the most recent and paginated
+    to 10 results-per-page.
+
+    If the "followflag" = 1, the function retrieves only posts belonging to users who
+    the currently logged-in user follows.
+
+    If the "followflag" = 0, but a username is submitted, the function retrieves only posts
+    belonging to that username.
+    NOTE: Usernames are required to be unique according to the User class in models.py.
+
+    Otherwise, the function returns all Post objects.
     """
+
+    # Get posts as specified by any submitted filters.
     if followflag == 1:
         user = request.user
 
@@ -115,11 +141,13 @@ def get_posts(request, pagenumber, username='null', followflag=0):
     else:
         posts = Post.objects.all()
 
+    # Order and paginate the list of posts
     posts = posts.order_by("-timestamp").all()
     serialized = [post.serialize() for post in posts]
     paginated = Paginator(serialized, 10)
     p = paginated.page(pagenumber)
 
+    # Prepare JSON package for response
     package = {
         "requestor": request.user.username,
         "response": p.object_list,
@@ -127,6 +155,7 @@ def get_posts(request, pagenumber, username='null', followflag=0):
         "prevflag": p.has_previous()
     }
 
+    # If next or previous pages exist, include those page numbers in the JSON package
     if p.has_next():
         package['nextpage'] = p.next_page_number()
     if p.has_previous():
@@ -136,8 +165,12 @@ def get_posts(request, pagenumber, username='null', followflag=0):
 
 
 def get_profile(request, username):
+    """
+    Given a username, return the user's profile info.
+
+    NOTE: Usernames are required to be unique according to the User class in models.py.
+    """
     user = User.objects.get(username=username)
-    print(user.serialize())
     return JsonResponse({
         "requestor": request.user.username,
         "response": user.serialize()
@@ -146,6 +179,9 @@ def get_profile(request, username):
 
 @login_required
 def get_following(request):
+    """
+    Return all users who the currently logged-in user follows.
+    """
     user = request.user
     return JsonResponse({
         "requestor": request.user.username,
@@ -158,10 +194,12 @@ def get_following(request):
 @login_required
 def toggle_follow(request):
     """
-    Toggle whether the requestor is following the user.
+    Toggle whether the requestor is following the user submitted via PUT (the "target").
     """
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required."}, status=400)
+
+    # Access currently logged-in user and target user
     user = request.user
     data = json.loads(request.body)
     target = User.objects.get(username=data.get("target", ""))
@@ -182,10 +220,13 @@ def toggle_like(request):
     """
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required."}, status=400)
+
+    # Access currently logged-in user and the target post
     user = request.user
     data = json.loads(request.body)
     post = Post.objects.get(id=data.get("post",""))
 
+    # If the user already likes this post, unlike.  Otherwise, like.
     if Post.objects.filter(pk=post.pk, likes__pk=user.pk):
         post.likes.remove(user)
         return JsonResponse({"message": "Unliked"}, status=201)

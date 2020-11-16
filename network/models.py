@@ -19,6 +19,10 @@ class User(AbstractUser):
         return f"<{self.pk}: {self.username}>"
 
     def serialize(self):
+        """
+        Returns a python dict representation of relevant data within a specific
+        instance of User.
+        """
         followerslist = []
         for follower in self.followers.all():
             followername = follower.username
@@ -31,12 +35,6 @@ class User(AbstractUser):
             "followerscount": len(followerslist),
             "followingcount": len(User.objects.filter(followers=self))
         }
-
-#    def following(self):
-#        followinglist = []
-#        for user in User.objects.filter(followers=self):
-#            followinglist.append(user.username)
-#        return followinglist
 
 
 class Post(models.Model):
@@ -59,6 +57,10 @@ class Post(models.Model):
         return f"<{self.pk}: post by {self.poster}>"
 
     def serialize(self):
+        """
+        Returns a python dict representation of relevant data within a specific
+        instance of Post.
+        """
         likeslist = []
         for user in self.likes.all():
             likeslist.append(user.username)
