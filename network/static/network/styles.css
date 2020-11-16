@@ -1,7 +1,49 @@
-.post-div {
+.post-div, #profile-view, #newpost-view {
     border: 1px solid black;
-    height: 230px;
     width: 80%;
     margin: 0px 0px 10px 20px;
-    padding-left: 10px;
+    padding: 10px;
 }
+
+.post-div {
+    height: 120px;
+}
+
+#profile-view, #newpost-view {
+    height: 200px;
+}
+
+.post-content {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.username-line, .timestamp {
+    float: left;
+    margin-right: 20px;
+}
+
+.timestamp {
+    font-style: italic;
+}
+
+.likes-div {
+    float: right;
+    height: 50px;
+    width: 200px;
+}
+
+.likes-div > * {
+    float: left;
+    margin-left: 20px;
+}
+
+.editlink {
+    margin: auto;
+}
+
+.timeline-view > .btn-primary {
+    margin: auto;
+}
+

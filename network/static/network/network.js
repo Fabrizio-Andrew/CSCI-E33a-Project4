@@ -48,6 +48,9 @@ function compose() {
 
 function load_allposts(pagenumber=1) {
 
+    // Hide the profile view. (Other views are hidden/displayed in render_posts())
+    document.querySelector('#profile-view').style.display = 'none';
+    
     // Fetch all posts
     fetch(`/posts/${pagenumber}`)
     .then(response => response.json())
@@ -162,6 +165,11 @@ function render_posts(package) {
         div.className = 'post-div';
         div.id = `post_${post.id}`;
 
+        // Post content
+        var content = document.createElement('p');
+        content.className = 'post-content';
+        content.innerHTML = post.content;
+
         // Poster's username
         var username = document.createElement('a');
         username.className = 'username-line';
@@ -171,11 +179,6 @@ function render_posts(package) {
         // Open user profile when the username is clicked
         username.onclick = () => load_profile(post.poster);
 
-        // Post content
-        var content = document.createElement('p');
-        content.className = 'post-content';
-        content.innerHTML = post.content;
-
         // Timestamp
         var time = document.createElement('p');
         time.className = 'timestamp';
@@ -183,10 +186,11 @@ function render_posts(package) {
 
         // Display likes and Like/Unlike button
         var likesdiv = document.createElement('div')
+        likesdiv.className = 'likes-div';
         like_post(post, package.requestor, likesdiv);
       
         // Append elements to post div and post div to timeline view
-        div.append(username, content, time, likesdiv);
+        div.append(content, username, time, likesdiv);
         
         // If post belongs to current user, add "edit" button
         if (package.requestor === post.poster) {
